@@ -69,7 +69,7 @@ dialog::backdrop{background:rgba(5,6,12,.55)}
     </div>
   </div>
   <div class="stage">
-    <div class="warn" id="warn" hidden>Add your Gemini API key in Account so Nova can answer.</div>
+    <div class="warn" id="warn" hidden>Add your Groq API key in Account so Nova can answer.</div>
     <canvas id="orb" aria-hidden="true"></canvas>
     <div class="cap dim" id="cap" aria-live="polite"></div>
   </div>
@@ -109,7 +109,7 @@ dialog::backdrop{background:rgba(5,6,12,.55)}
 <dialog id="dacc"><div class="sh">
   <h2>Account</h2>
   <div class="card" style="margin-top:10px"><div class="acc"><div class="av" id="av">?</div><div><b id="an">Guest</b><p id="as">Saved only in this browser.</p></div></div></div>
-  <h3>Gemini connection</h3><div class="card"><label class="f">API key <input type="password" id="k_key" autocomplete="off" placeholder="Paste key"></label><label class="f">Model <input type="text" id="k_model" maxlength="60"></label></div><p class="hint" style="margin-top:8px">Get a free key at aistudio.google.com. It stays in this browser only.</p><h3>Recent conversation</h3>
+  <h3>Groq connection</h3><div class="card"><label class="f">API key <input type="password" id="k_key" autocomplete="off" placeholder="Paste key"></label><label class="f">Model <input type="text" id="k_model" maxlength="60"></label></div><p class="hint" style="margin-top:8px">Get a free key at console.groq.com/keys. It stays in this browser only.</p><h3>Recent conversation</h3>
   <div class="card"><div class="hist" id="hist"></div></div>
   <div class="row2"><button id="clear">Clear conversation</button></div>
   <p class="hint" style="margin-top:12px">Everything is saved only in this browser.</p>
@@ -118,7 +118,7 @@ dialog::backdrop{background:rgba(5,6,12,.55)}
 
 <script>
 const $=s=>document.querySelector(s);
-const DEF={model:'gemini-2.5-flash',agent:'Nova',callMe:'',style:'friendly',length:'short',speak:true,voice:'',rate:1,handsfree:false,orb:'aurora',theme:'system'};
+const DEF={model:'llama-3.3-70b-versatile',agent:'Nova',callMe:'',style:'friendly',length:'short',speak:true,voice:'',rate:1,handsfree:false,orb:'aurora',theme:'system'};
 let S={...DEF},hist=[],sample=null,dbm=null,uid=null,me=null,state='idle',rec=null,amp=0,busy=false,wantListen=false;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const TTS=window.speechSynthesis;
@@ -129,7 +129,7 @@ const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k))
 Object.assign(S,LS('nova-set')||{});hist=LS('nova-hist')||[];
 function saveSet(){LS('nova-set',S)}
 function saveHist(){LS('nova-hist',hist.slice(-40))}
-if(!LS('nova-key'))$('#warn').hidden=false;
+if(!LS('nova-groq-key'))$('#warn').hidden=false;
 
 /* ---------- UI helpers ---------- */
 function applyTheme(){S.theme==='system'?document.documentElement.removeAttribute('data-theme'):document.documentElement.setAttribute('data-theme',S.theme)}
@@ -206,22 +206,21 @@ function persona(){
 }
 async function ask(text){
   text=text.trim();if(!text||busy)return;
-  const key=LS('nova-key');
-  if(!key){$('#warn').hidden=false;say('Add your Gemini API key in Account first.',true);return}
+  const key=LS('nova-groq-key');
+  if(!key){$('#warn').hidden=false;say('Add your Groq API key in Account first.',true);return}
   busy=true;setState('thinking');hist.push({r:'u',t:text});say('…',true);
   try{
-    const contents=hist.slice(-12).map(m=>({role:m.r==='u'?'user':'model',parts:[{text:m.t}]}));
-    while(contents[0]&&contents[0].role==='model')contents.shift();
-    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(S.model||'gemini-2.5-flash')+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:persona()}]},contents})});
+    const msgs=[{role:'system',content:persona()}].concat(hist.slice(-12).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t})));
+    const model=(S.model&&!/gemini/i.test(S.model))?S.model:'llama-3.3-70b-versatile';
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model,messages:msgs,temperature:0.7,max_tokens:400})});
     if(!res.ok){const er=new Error('http');er.status=res.status;throw er}
     const data=await res.json();
-    const parts=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
-    const ans=parts.map(p=>p.text||'').join('').trim()||'Sorry, I did not get that.';
+    const ans=((data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'').trim()||'Sorry, I did not get that.';
     hist.push({r:'a',t:ans});saveHist();say(ans);busy=false;speak(ans);
   }catch(e){
     hist.pop();busy=false;setState('idle');
     const st=e&&e.status;
-    say(st===400||st===403?'Gemini rejected the request. Check your API key and model name in Account.':st===429?'Too many requests. Wait a moment, then try again.':'Could not reach Gemini. Check your connection and try again.',true);
+    say(st===401||st===403?'Groq rejected your API key. Check it in Account.':st===404||st===400?'Groq could not use that model name. Check the model in Account.':st===429?'Too many requests. Wait a moment, then try again.':'Could not reach Groq. Check your connection and try again.',true);
   }
 }
 function speak(t){
@@ -244,15 +243,16 @@ $('#bacc').onclick=()=>{
   const h=$('#hist');h.textContent='';
   if(!hist.length){h.innerHTML='<div><i>Nothing yet. Say hello.</i></div>'}
   hist.slice(-10).forEach(m=>{const d=document.createElement('div'),i=document.createElement('i');i.textContent=m.r==='u'?'You: ':(S.agent||'Nova')+': ';d.append(i,document.createTextNode(m.t));h.appendChild(d)});
-  $('#k_key').value=LS('nova-key')||'';$('#k_model').value=S.model;$('#dacc').showModal();
+  $('#k_key').value=LS('nova-groq-key')||'';$('#k_model').value=S.model;$('#dacc').showModal();
 };
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close()}));
 $('#reset').onclick=()=>{S={...DEF};saveSet();fillSet();applyAll()};
 $('#clear').onclick=()=>{hist=[];saveHist();$('#hist').innerHTML='<div><i>Nothing yet. Say hello.</i></div>';idleCap()};
-$('#k_key').addEventListener('change',e=>{const v=e.target.value.trim();LS('nova-key',v);$('#warn').hidden=!!v});
-$('#k_model').addEventListener('change',e=>{S.model=e.target.value.trim()||'gemini-2.5-flash';saveSet()});
+$('#k_key').addEventListener('change',e=>{const v=e.target.value.trim();LS('nova-groq-key',v);$('#warn').hidden=!!v});
+$('#k_model').addEventListener('change',e=>{S.model=e.target.value.trim()||'llama-3.3-70b-versatile';saveSet()});
 applyAll();setState('idle');
 </script>
 </body>
 </html>
+
