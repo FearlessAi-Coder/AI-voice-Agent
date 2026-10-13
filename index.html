@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nova – AI Voice Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f0f8;--card:#fff;--fg:#14152b;--mut:#6b6e8a;--line:#dcdbed;--ac:#6d5efc;--acfg:#fff;--glass:rgba(255,255,255,.7);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d16;--card:#161929;--fg:#eef0fb;--mut:#8b8fb0;--line:#262a42;--ac:#8b7dff;--acfg:#0b0d16;--glass:rgba(22,25,41,.75)}}
+:root[data-theme="dark"]{--bg:#0b0d16;--card:#161929;--fg:#eef0fb;--mut:#8b8fb0;--line:#262a42;--ac:#8b7dff;--acfg:#0b0d16;--glass:rgba(22,25,41,.75)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:'Sora',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid #8fa4ff;outline-offset:2px}
+.app{display:flex;flex-direction:column;height:100%;max-width:560px;margin:0 auto;padding:0 18px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+.top b{font-size:18px;letter-spacing:-.01em}
+.ib{width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:15px}
+.tr{display:flex;gap:8px}
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#orb{width:min(74vw,300px);height:min(74vw,300px)}
+.cap{min-height:96px;max-height:28vh;overflow-y:auto;text-align:center;font-size:19px;line-height:1.45;font-weight:600;letter-spacing:-.01em;width:100%;padding:0 4px}
+.cap.dim{color:var(--mut);font-weight:400;font-size:16px}
+.dock{padding:6px 0 18px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.mic{width:76px;height:76px;border-radius:50%;background:var(--ac);color:var(--acfg);display:grid;place-items:center}
+.mic svg{width:30px;height:30px}
+.mic[aria-pressed="true"]{box-shadow:0 0 0 8px color-mix(in srgb,var(--ac) 28%,transparent)}
+.hint{font-size:13px;color:var(--mut);min-height:18px}
+.typebar{display:none;width:100%;gap:8px}
+.typebar.on{display:flex}
+.typebar input{flex:1;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card)}
+.typebar button,.btn{background:var(--ac);color:var(--acfg);border-radius:14px;padding:0 16px;font-weight:600}
+.lnk{font-size:13px;color:var(--mut);text-decoration:underline;text-underline-offset:3px}
+dialog{border:0;padding:0;width:100%;max-width:520px;margin:auto auto 0;border-radius:26px 26px 0 0;background:var(--bg);color:var(--fg);max-height:88vh}
+dialog::backdrop{background:rgba(5,6,12,.55)}
+.sh{padding:18px 18px calc(24px + env(safe-area-inset-bottom,0px))}
+.sh h2{margin:0 0 4px;font-size:20px}
+.sh h3{margin:18px 0 8px;font-size:13px;color:var(--mut);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.f{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:15px}
+.f:last-child{border-bottom:0}
+.f select,.f input[type=text],.f input[type=password]{max-width:55%;background:transparent;border:0;text-align:right;color:var(--mut);min-width:0}
+.f input[type=range]{width:46%}
+.f input[type=checkbox]{width:22px;height:22px;accent-color:var(--ac)}
+.acc{display:flex;align-items:center;gap:14px;padding:14px}
+.av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:20px;color:#fff;background:var(--ac);flex:none}
+.acc p{margin:0;font-size:13px;color:var(--mut)}
+.hist{max-height:24vh;overflow-y:auto;padding:4px 14px;font-size:14px}
+.hist div{padding:6px 0;border-bottom:1px solid var(--line)}
+.hist div:last-child{border:0}
+.hist i{font-style:normal;color:var(--mut)}
+.row2{display:flex;gap:8px;margin-top:12px}
+.row2 button{flex:1;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-weight:600;font-size:14px}
+.done{width:100%;margin-top:16px;padding:14px;border-radius:14px;background:var(--ac);color:var(--acfg);font-weight:700}
+.warn{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ac);padding:10px 12px;border-radius:10px;font-size:13px;color:var(--mut);margin-bottom:8px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <b id="nm">Nova</b>
+    <div class="tr">
+      <button class="ib" id="bset" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+      <button class="ib" id="bacc" aria-label="Account">?</button>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="warn" id="warn" hidden>Add your Gemini API key in Account so Nova can answer.</div>
+    <canvas id="orb" aria-hidden="true"></canvas>
+    <div class="cap dim" id="cap" aria-live="polite"></div>
+  </div>
+  <div class="dock">
+    <button class="mic" id="mic" aria-pressed="false" aria-label="Talk to Nova"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <div class="hint" id="hint">Tap to talk</div>
+    <form class="typebar" id="tb"><input id="txt" type="text" placeholder="Type a message" aria-label="Message"><button>Send</button></form>
+    <button class="lnk" id="ttype">Type instead</button>
+  </div>
+</div>
+
+<dialog id="dset"><div class="sh">
+  <h2>Settings</h2>
+  <h3>Assistant</h3>
+  <div class="card">
+    <label class="f">Name <input type="text" id="s_agent" maxlength="20"></label>
+    <label class="f">Call me <input type="text" id="s_callMe" maxlength="24" placeholder="Your name"></label>
+    <label class="f">Personality <select id="s_style"><option value="friendly">Friendly</option><option value="concise">Concise</option><option value="professional">Professional</option><option value="playful">Playful</option></select></label>
+    <label class="f">Answer length <select id="s_length"><option value="short">Short</option><option value="medium">Medium</option></select></label>
+  </div>
+  <h3>Voice</h3>
+  <div class="card">
+    <label class="f">Read answers aloud <input type="checkbox" id="s_speak"></label>
+    <label class="f">Voice <select id="s_voice"><option value="">Default</option></select></label>
+    <label class="f">Speed <input type="range" id="s_rate" min="0.7" max="1.4" step="0.05"></label>
+    <label class="f">Keep listening after answers <input type="checkbox" id="s_handsfree"></label>
+  </div>
+  <h3>Look</h3>
+  <div class="card">
+    <label class="f">Orb color <select id="s_orb"><option value="aurora">Aurora</option><option value="ocean">Ocean</option><option value="ember">Ember</option><option value="mono">Mono</option></select></label>
+    <label class="f">Theme <select id="s_theme"><option value="system">Match device</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+  </div>
+  <div class="row2"><button id="reset">Reset settings</button></div>
+  <button class="done" data-close>Done</button>
+</div></dialog>
+
+<dialog id="dacc"><div class="sh">
+  <h2>Account</h2>
+  <div class="card" style="margin-top:10px"><div class="acc"><div class="av" id="av">?</div><div><b id="an">Guest</b><p id="as">Saved only in this browser.</p></div></div></div>
+  <h3>Gemini connection</h3><div class="card"><label class="f">API key <input type="password" id="k_key" autocomplete="off" placeholder="Paste key"></label><label class="f">Model <input type="text" id="k_model" maxlength="60"></label></div><p class="hint" style="margin-top:8px">Get a free key at aistudio.google.com. It stays in this browser only.</p><h3>Recent conversation</h3>
+  <div class="card"><div class="hist" id="hist"></div></div>
+  <div class="row2"><button id="clear">Clear conversation</button></div>
+  <p class="hint" style="margin-top:12px">Everything is saved only in this browser.</p>
+  <button class="done" data-close>Done</button>
+</div></dialog>
+
+<script>
+const $=s=>document.querySelector(s);
+const DEF={model:'gemini-2.5-flash',agent:'Nova',callMe:'',style:'friendly',length:'short',speak:true,voice:'',rate:1,handsfree:false,orb:'aurora',theme:'system'};
+let S={...DEF},hist=[],sample=null,dbm=null,uid=null,me=null,state='idle',rec=null,amp=0,busy=false,wantListen=false;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const TTS=window.speechSynthesis;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- storage (this browser only) ---------- */
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+Object.assign(S,LS('nova-set')||{});hist=LS('nova-hist')||[];
+function saveSet(){LS('nova-set',S)}
+function saveHist(){LS('nova-hist',hist.slice(-40))}
+if(!LS('nova-key'))$('#warn').hidden=false;
+
+/* ---------- UI helpers ---------- */
+function applyTheme(){S.theme==='system'?document.documentElement.removeAttribute('data-theme'):document.documentElement.setAttribute('data-theme',S.theme)}
+function applyAll(){
+  applyTheme();$('#nm').textContent=S.agent||'Nova';document.title=(S.agent||'Nova')+' – AI Voice Agent';
+  const nm=(me&&me.name)||'';const ini=(S.callMe||nm||'?').trim().charAt(0).toUpperCase()||'?';
+  $('#bacc').textContent=ini;$('#av').textContent=ini;
+  if(me){$('#an').textContent=nm||'Signed in';$('#as').textContent='Signed in with your Claude account. Settings sync across devices.';if(me.color)$('#av').style.background=me.color}
+  else{$('#an').textContent=S.callMe||'You'}
+  if(state==='idle'&&!busy)idleCap();
+}
+function idleCap(){const c=$('#cap');c.className='cap dim';c.textContent=hist.length?'Tap the mic to keep talking.':`Hi${S.callMe?', '+S.callMe:''}. I'm ${S.agent||'Nova'}. Tap the mic and say something.`}
+function setState(s){
+  state=s;$('#mic').setAttribute('aria-pressed',s==='listening');
+  $('#hint').textContent={idle:'Tap to talk',listening:'Listening. Tap to stop',thinking:'Thinking',speaking:'Speaking. Tap to interrupt'}[s];
+}
+function say(t,dim){const c=$('#cap');c.className='cap'+(dim?' dim':'');c.textContent=t;c.scrollTop=1e9}
+
+/* ---------- orb ---------- */
+const ORBS={aurora:['#34d399','#6366f1','#f472b6'],ocean:['#22d3ee','#3b82f6','#a78bfa'],ember:['#fbbf24','#f97316','#ef4444'],mono:['#e5e7eb','#9ca3af','#6b7280']};
+const cv=$('#orb'),g=cv.getContext('2d');
+function fit(){const d=Math.min(devicePixelRatio||1,2),w=cv.clientWidth;cv.width=w*d;cv.height=w*d;g.setTransform(d,0,0,d,0,0)}
+addEventListener('resize',fit);fit();
+function frame(t){
+  const w=cv.clientWidth,c=w/2,P=ORBS[S.orb]||ORBS.aurora;
+  const sp=reduce?0:{idle:1,listening:1.7,thinking:3.2,speaking:2.2}[state];
+  const ts=t/1000*sp;amp*=.93;
+  const R=w*.27*(1+.04*Math.sin(ts*1.3)+amp*.22+(state==='listening'?.05:0));
+  g.clearRect(0,0,w,w);
+  let gl=g.createRadialGradient(c,c,R*.6,c,c,R*1.9);gl.addColorStop(0,P[1]+'66');gl.addColorStop(1,P[1]+'00');g.fillStyle=gl;g.fillRect(0,0,w,w);
+  g.save();g.beginPath();g.arc(c,c,R,0,7);g.clip();
+  g.fillStyle=P[1];g.fillRect(0,0,w,w);
+  for(let i=0;i<3;i++){
+    const a=ts*(.7+i*.35)+i*2.1,x=c+Math.cos(a)*R*.55,y=c+Math.sin(a*1.1)*R*.55,r=R*(.8+.15*Math.sin(ts+i));
+    const q=g.createRadialGradient(x,y,0,x,y,r);q.addColorStop(0,P[(i*2)%3]+'ee');q.addColorStop(1,P[(i*2)%3]+'00');g.fillStyle=q;g.fillRect(0,0,w,w)}
+  const hi=g.createRadialGradient(c-R*.35,c-R*.45,0,c-R*.35,c-R*.45,R*.9);hi.addColorStop(0,'rgba(255,255,255,.45)');hi.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=hi;g.fillRect(0,0,w,w);
+  g.restore();
+  if(state==='listening'&&!reduce){for(let i=0;i<2;i++){const ph=((t/1400)+i*.5)%1;g.strokeStyle=P[0]+Math.round((1-ph)*120).toString(16).padStart(2,'0');g.lineWidth=2;g.beginPath();g.arc(c,c,R*(1.08+ph*.55),0,7);g.stroke()}}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+/* ---------- voice ---------- */
+function loadVoices(){
+  if(!TTS)return;const sel=$('#s_voice'),cur=S.voice;
+  sel.innerHTML='<option value="">Default</option>';
+  TTS.getVoices().forEach(v=>{const o=document.createElement('option');o.value=v.name;o.textContent=v.name;sel.appendChild(o)});
+  sel.value=cur;
+}
+if(TTS){loadVoices();TTS.onvoiceschanged=loadVoices}
+if(!SR){$('#mic').disabled=true;$('#hint').textContent='Voice input is not supported here. Type instead.';$('#tb').classList.add('on');$('#ttype').hidden=true}
+
+function listen(){
+  if(!SR||busy)return;
+  if(TTS)TTS.cancel();
+  rec=new SR();rec.lang=navigator.language||'en-US';rec.interimResults=true;rec.continuous=false;
+  let fin='',gotErr=false;
+  rec.onstart=()=>{setState('listening');say('Listening…',true)};
+  rec.onresult=ev=>{let t='';for(const r of ev.results){t+=r[0].transcript;if(r.isFinal)fin=t}amp=.8;say(t||'Listening…',!t)};
+  rec.onerror=ev=>{gotErr=true;setState('idle');wantListen=false;say(ev.error==='not-allowed'?'Allow microphone access in your browser, then tap the mic again.':ev.error==='no-speech'?'I did not hear anything. Tap the mic and try again.':'Could not hear you. Tap the mic and try again.',true)};
+  rec.onend=()=>{if(state==='listening')setState('idle');if(fin)ask(fin);else if(!gotErr&&state==='idle')idleCap()};
+  try{rec.start()}catch(e){}
+}
+$('#mic').onclick=()=>{
+  if(state==='listening'){wantListen=false;rec&&rec.stop();return}
+  if(state==='speaking'){if(TTS)TTS.cancel();wantListen=false;setState('idle');return}
+  if(state==='idle')listen();
+};
+
+/* ---------- brain ---------- */
+const STY={friendly:'Warm, upbeat and conversational.',concise:'Direct and efficient, with no small talk.',professional:'Calm, polished and professional.',playful:'Light, witty and playful.'};
+const LEN={short:'Answer in one or two sentences.',medium:'Answer in at most four sentences.'};
+function persona(){
+  return `You are ${S.agent||'Nova'}, a voice assistant. ${STY[S.style]} ${LEN[S.length]} Your replies are read aloud, so use plain sentences with no markdown, lists, emoji or links. ${S.callMe?'The user likes to be called '+S.callMe+'.':''} Be honest about what you cannot do: you cannot see the user's accounts, browse the web or act outside this chat.`;
+}
+async function ask(text){
+  text=text.trim();if(!text||busy)return;
+  const key=LS('nova-key');
+  if(!key){$('#warn').hidden=false;say('Add your Gemini API key in Account first.',true);return}
+  busy=true;setState('thinking');hist.push({r:'u',t:text});say('…',true);
+  try{
+    const contents=hist.slice(-12).map(m=>({role:m.r==='u'?'user':'model',parts:[{text:m.t}]}));
+    while(contents[0]&&contents[0].role==='model')contents.shift();
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(S.model||'gemini-2.5-flash')+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:persona()}]},contents})});
+    if(!res.ok){const er=new Error('http');er.status=res.status;throw er}
+    const data=await res.json();
+    const parts=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
+    const ans=parts.map(p=>p.text||'').join('').trim()||'Sorry, I did not get that.';
+    hist.push({r:'a',t:ans});saveHist();say(ans);busy=false;speak(ans);
+  }catch(e){
+    hist.pop();busy=false;setState('idle');
+    const st=e&&e.status;
+    say(st===400||st===403?'Gemini rejected the request. Check your API key and model name in Account.':st===429?'Too many requests. Wait a moment, then try again.':'Could not reach Gemini. Check your connection and try again.',true);
+  }
+}
+function speak(t){
+  if(!S.speak||!TTS){setState('idle');if(S.handsfree)listen();return}
+  const u=new SpeechSynthesisUtterance(t);u.rate=+S.rate||1;
+  const v=TTS.getVoices().find(x=>x.name===S.voice);if(v)u.voice=v;
+  u.onstart=()=>setState('speaking');u.onboundary=()=>{amp=.9};
+  u.onend=u.onerror=()=>{if(state==='speaking'){setState('idle');if(S.handsfree&&wantListen!==false)listen()}};
+  TTS.cancel();TTS.speak(u);setState('speaking');
+}
+$('#tb').onsubmit=e=>{e.preventDefault();const v=$('#txt').value;$('#txt').value='';ask(v)};
+$('#ttype').onclick=()=>{$('#tb').classList.toggle('on');if($('#tb').classList.contains('on'))$('#txt').focus()};
+
+/* ---------- settings & account ---------- */
+const FIELDS=['agent','callMe','style','length','speak','voice','rate','handsfree','orb','theme'];
+function fillSet(){FIELDS.forEach(k=>{const el=$('#s_'+k);if(el.type==='checkbox')el.checked=!!S[k];else el.value=S[k]})}
+FIELDS.forEach(k=>{const el=$('#s_'+k);el.addEventListener('change',()=>{S[k]=el.type==='checkbox'?el.checked:el.value;if(k==='rate')S.rate=+el.value;saveSet();applyAll()});if(el.type==='text')el.addEventListener('input',()=>{S[k]=el.value;$('#nm').textContent=S.agent||'Nova'});});
+$('#bset').onclick=()=>{fillSet();$('#dset').showModal()};
+$('#bacc').onclick=()=>{
+  const h=$('#hist');h.textContent='';
+  if(!hist.length){h.innerHTML='<div><i>Nothing yet. Say hello.</i></div>'}
+  hist.slice(-10).forEach(m=>{const d=document.createElement('div'),i=document.createElement('i');i.textContent=m.r==='u'?'You: ':(S.agent||'Nova')+': ';d.append(i,document.createTextNode(m.t));h.appendChild(d)});
+  $('#k_key').value=LS('nova-key')||'';$('#k_model').value=S.model;$('#dacc').showModal();
+};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close()}));
+$('#reset').onclick=()=>{S={...DEF};saveSet();fillSet();applyAll()};
+$('#clear').onclick=()=>{hist=[];saveHist();$('#hist').innerHTML='<div><i>Nothing yet. Say hello.</i></div>';idleCap()};
+$('#k_key').addEventListener('change',e=>{const v=e.target.value.trim();LS('nova-key',v);$('#warn').hidden=!!v});
+$('#k_model').addEventListener('change',e=>{S.model=e.target.value.trim()||'gemini-2.5-flash';saveSet()});
+applyAll();setState('idle');
+</script>
+</body>
+</html>
